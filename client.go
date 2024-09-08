@@ -22,14 +22,14 @@ func (c *Client) ListBuckets(ctx context.Context) (*s3.ListBucketsOutput, error)
 	return c.client.ListBuckets(ctx, &s3.ListBucketsInput{})
 }
 
-func (c *Client) ListObjects(ctx context.Context, bucket string, prefix string) (*s3.ListObjectsV2Output, error) {
-	var prefix2 *string
-	if prefix != "" {
-		prefix2 = &prefix
+func (c *Client) ListObjects(ctx context.Context, bucket string, keyPrefix string) (*s3.ListObjectsV2Output, error) {
+	var keyPrefix2 *string
+	if keyPrefix != "" {
+		keyPrefix2 = &keyPrefix
 	}
 	res, err := c.client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
 		Bucket: aws.String(bucket),
-		Prefix: prefix2,
+		Prefix: keyPrefix2,
 	})
 	return res, err
 }

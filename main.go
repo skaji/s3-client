@@ -31,7 +31,7 @@ Command:
   zcat        bucket/key
 
   ls          bucket
-  ls          bucket prefix
+  ls          bucket/keyPrefix
 
   private-url bucket/key
   public-url  bucket/key
@@ -139,7 +139,7 @@ func run(ctx context.Context, cmd string, args ...string) error {
 		f.Close()
 		return os.Rename(localFile+"_tmp", localFile)
 	case "ls":
-		if err := needArgs(args, 0, 1, 2); err != nil {
+		if err := needArgs(args, 0, 1); err != nil {
 			return err
 		}
 		if len(args) == 0 {
@@ -154,12 +154,11 @@ func run(ctx context.Context, cmd string, args ...string) error {
 			}
 			return nil
 		}
-		bucket := args[0]
-		prefix := ""
-		if len(args) > 1 {
-			prefix = args[1]
+		bucket, keyPrefix, err := parseAsObject(args[0], false)
+		if err != nil {
+			return err
 		}
-		res, err := NewClient(cfg).ListObjects(ctx, bucket, prefix)
+		res, err := NewClient(cfg).ListObjects(ctx, bucket, keyPrefix)
 		if err != nil {
 			return err
 		}
