@@ -33,6 +33,8 @@ Command:
   ls          bucket
   ls          bucket/keyPrefix
 
+  rm          bucket/key bucket/key bucket/key
+
   private-url bucket/key
   public-url  bucket/key
 `
@@ -77,7 +79,7 @@ func run(ctx context.Context, cmd string, args ...string) error {
 		if err != nil {
 			return err
 		}
-		reader, closes, err := NewClient(cfg).GetObject(ctx, bucket, key)
+		reader, closes, err := NewClient(cfg).GetObject(ctx, &Object{Bucket: bucket, Key: key})
 		if err != nil {
 			return err
 		}
@@ -92,7 +94,7 @@ func run(ctx context.Context, cmd string, args ...string) error {
 		if err != nil {
 			return err
 		}
-		reader, closes, err := NewClient(cfg).GetObject(ctx, bucket, key)
+		reader, closes, err := NewClient(cfg).GetObject(ctx, &Object{Bucket: bucket, Key: key})
 		if err != nil {
 			return err
 		}
@@ -128,7 +130,7 @@ func run(ctx context.Context, cmd string, args ...string) error {
 		}
 		defer f.Close()
 		defer os.Remove(localFile + "_tmp")
-		reader, closes, err := NewClient(cfg).GetObject(ctx, bucket, key)
+		reader, closes, err := NewClient(cfg).GetObject(ctx, &Object{Bucket: bucket, Key: key})
 		if err != nil {
 			return err
 		}
@@ -188,12 +190,29 @@ func run(ctx context.Context, cmd string, args ...string) error {
 		if err != nil {
 			return err
 		}
-		res, err := NewClient(cfg).PresignGetObject(ctx, bucket, key)
+		res, err := NewClient(cfg).PresignGetObject(ctx, &Object{Bucket: bucket, Key: key})
 		if err != nil {
 			return err
 		}
 		fmt.Println(res.URL)
 		return nil
+	case "rm", "delete":
+		if len(args) == 0 {
+			return errors.New("need arguments")
+		}
+		var objs []*Object
+		for _, arg := range args {
+			bucket, key, err := parseAsObject(arg, true)
+			if err != nil {
+				return err
+			}
+			objs = append(objs, &Object{
+				Bucket: bucket,
+				Key:    key,
+			})
+		}
+		return NewClient(cfg).DeleteObjects(ctx, objs)
+
 	}
 
 	return errors.New("unknown command: " + cmd)
