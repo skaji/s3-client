@@ -33,6 +33,8 @@ Command:
   ls          bucket
   ls          bucket/keyPrefix
 
+  put         localFile bucket/key
+
   private-url bucket/key
   public-url  bucket/key
 `
@@ -170,6 +172,21 @@ func run(ctx context.Context, cmd string, args ...string) error {
 		}
 		fmt.Fprintf(os.Stderr, "IsTruncated: %v\n", *res.IsTruncated)
 		return nil
+	case "put":
+		if err := needArgs(args, 2); err != nil {
+			return err
+		}
+		f, err := os.Open(args[0])
+		if err != nil {
+			return err
+		}
+		defer f.Close()
+
+		bucket, key, err := parseAsObject(args[1], true)
+		if err != nil {
+			return err
+		}
+		return NewClient(cfg).PutObject(ctx, bucket, key, f)
 	case "public-url":
 		if err := needArgs(args, 1); err != nil {
 			return err

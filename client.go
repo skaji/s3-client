@@ -49,6 +49,15 @@ func (c *Client) GetObject(ctx context.Context, bucket string, key string) (io.R
 	return res.Body, closes, nil
 }
 
+func (c *Client) PutObject(ctx context.Context, bucket string, key string, body io.Reader) error {
+	_, err := c.client.PutObject(ctx, &s3.PutObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+		Body:   body,
+	})
+	return err
+}
+
 func (c *Client) PresignGetObject(ctx context.Context, bucket string, key string) (*signer.PresignedHTTPRequest, error) {
 	return s3.NewPresignClient(c.client).PresignGetObject(ctx, &s3.GetObjectInput{
 		Bucket: aws.String(bucket),
