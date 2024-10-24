@@ -25,7 +25,7 @@ func (c *Client) ListBuckets(ctx context.Context) (*s3.ListBucketsOutput, error)
 func (c *Client) ListObjects(ctx context.Context, bucket string, keyPrefix string) (*s3.ListObjectsV2Output, error) {
 	var keyPrefix2 *string
 	if keyPrefix != "" {
-		keyPrefix2 = &keyPrefix
+		keyPrefix2 = aws.String(keyPrefix)
 	}
 	res, err := c.client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
 		Bucket: aws.String(bucket),
@@ -49,11 +49,23 @@ func (c *Client) GetObject(ctx context.Context, bucket string, key string) (io.R
 	return res.Body, closes, nil
 }
 
-func (c *Client) PutObject(ctx context.Context, bucket string, key string, body io.Reader) error {
+type PutObjectInput struct {
+	Body          io.Reader
+	ContentLength int64
+	ContentType   string
+}
+
+func (c *Client) PutObject(ctx context.Context, bucket string, key string, input PutObjectInput) error {
+	var contentType *string
+	if input.ContentType != "" {
+		contentType = aws.String(input.ContentType)
+	}
 	_, err := c.client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket: aws.String(bucket),
-		Key:    aws.String(key),
-		Body:   body,
+		Bucket:        aws.String(bucket),
+		Key:           aws.String(key),
+		Body:          input.Body,
+		ContentLength: aws.Int64(input.ContentLength),
+		ContentType:   contentType,
 	})
 	return err
 }

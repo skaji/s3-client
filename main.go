@@ -33,7 +33,7 @@ Command:
   ls          bucket
   ls          bucket/keyPrefix
 
-  put         localFile bucket/key
+  put         [--content-type TYPE] localFile bucket/key
 
   private-url bucket/key
   public-url  bucket/key
@@ -173,6 +173,11 @@ func run(ctx context.Context, cmd string, args ...string) error {
 		fmt.Fprintf(os.Stderr, "IsTruncated: %v\n", *res.IsTruncated)
 		return nil
 	case "put":
+		contentType := ""
+		if len(args) > 2 && args[0] == "--content-type" {
+			contentType = args[1]
+			args = args[2:]
+		}
 		if err := needArgs(args, 2); err != nil {
 			return err
 		}
@@ -181,12 +186,20 @@ func run(ctx context.Context, cmd string, args ...string) error {
 			return err
 		}
 		defer f.Close()
+		info, err := f.Stat()
+		if err != nil {
+			return err
+		}
 
 		bucket, key, err := parseAsObject(args[1], true)
 		if err != nil {
 			return err
 		}
-		return NewClient(cfg).PutObject(ctx, bucket, key, f)
+		return NewClient(cfg).PutObject(ctx, bucket, key, PutObjectInput{
+			Body:          f,
+			ContentLength: info.Size(),
+			ContentType:   contentType,
+		})
 	case "public-url":
 		if err := needArgs(args, 1); err != nil {
 			return err
