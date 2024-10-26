@@ -45,15 +45,17 @@ func (c *Client) GetObject(ctx context.Context, bucket string, key string) (io.R
 }
 
 type PutObjectInput struct {
+	Bucket        string
+	Key           string
 	Body          io.Reader
 	ContentLength int64
 	ContentType   string
 }
 
-func (c *Client) PutObject(ctx context.Context, bucket string, key string, input PutObjectInput) error {
+func (c *Client) PutObject(ctx context.Context, input PutObjectInput) error {
 	_, err := c.client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:        pointerOrNil(bucket),
-		Key:           pointerOrNil(key),
+		Bucket:        pointerOrNil(input.Bucket),
+		Key:           pointerOrNil(input.Key),
 		Body:          input.Body,
 		ContentLength: pointerOrNil(input.ContentLength),
 		ContentType:   pointerOrNil(input.ContentType),

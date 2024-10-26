@@ -195,7 +195,9 @@ func run(ctx context.Context, cmd string, args ...string) error {
 		if err != nil {
 			return err
 		}
-		return NewClient(cfg).PutObject(ctx, bucket, key, PutObjectInput{
+		return NewClient(cfg).PutObject(ctx, PutObjectInput{
+			Bucket:        bucket,
+			Key:           key,
 			Body:          f,
 			ContentLength: info.Size(),
 			ContentType:   contentType,
