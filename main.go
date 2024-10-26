@@ -79,7 +79,10 @@ func run(ctx context.Context, cmd string, args ...string) error {
 		if err != nil {
 			return err
 		}
-		reader, closes, err := NewClient(cfg).GetObject(ctx, bucket, key)
+		reader, closes, err := NewClient(cfg).GetObject(ctx, &Object{
+			Bucket: bucket,
+			Key:    key,
+		})
 		if err != nil {
 			return err
 		}
@@ -94,7 +97,10 @@ func run(ctx context.Context, cmd string, args ...string) error {
 		if err != nil {
 			return err
 		}
-		reader, closes, err := NewClient(cfg).GetObject(ctx, bucket, key)
+		reader, closes, err := NewClient(cfg).GetObject(ctx, &Object{
+			Bucket: bucket,
+			Key:    key,
+		})
 		if err != nil {
 			return err
 		}
@@ -130,7 +136,10 @@ func run(ctx context.Context, cmd string, args ...string) error {
 		}
 		defer f.Close()
 		defer os.Remove(localFile + "_tmp")
-		reader, closes, err := NewClient(cfg).GetObject(ctx, bucket, key)
+		reader, closes, err := NewClient(cfg).GetObject(ctx, &Object{
+			Bucket: bucket,
+			Key:    key,
+		})
 		if err != nil {
 			return err
 		}
@@ -196,8 +205,10 @@ func run(ctx context.Context, cmd string, args ...string) error {
 			return err
 		}
 		return NewClient(cfg).PutObject(ctx, PutObjectInput{
-			Bucket:        bucket,
-			Key:           key,
+			Object: &Object{
+				Bucket: bucket,
+				Key:    key,
+			},
 			Body:          f,
 			ContentLength: info.Size(),
 			ContentType:   contentType,
@@ -220,7 +231,10 @@ func run(ctx context.Context, cmd string, args ...string) error {
 		if err != nil {
 			return err
 		}
-		res, err := NewClient(cfg).PresignGetObject(ctx, bucket, key)
+		res, err := NewClient(cfg).PresignGetObject(ctx, &Object{
+			Bucket: bucket,
+			Key:    key,
+		})
 		if err != nil {
 			return err
 		}

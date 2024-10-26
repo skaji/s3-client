@@ -18,6 +18,11 @@ func NewClient(cfg aws.Config) *Client {
 	return &Client{client: client}
 }
 
+type Object struct {
+	Bucket string
+	Key    string
+}
+
 func (c *Client) ListBuckets(ctx context.Context) (*s3.ListBucketsOutput, error) {
 	return c.client.ListBuckets(ctx, &s3.ListBucketsInput{})
 }
@@ -29,10 +34,10 @@ func (c *Client) ListObjects(ctx context.Context, bucket string, keyPrefix strin
 	})
 }
 
-func (c *Client) GetObject(ctx context.Context, bucket string, key string) (io.Reader, func(), error) {
+func (c *Client) GetObject(ctx context.Context, obj *Object) (io.Reader, func(), error) {
 	res, err := c.client.GetObject(ctx, &s3.GetObjectInput{
-		Bucket: pointerOrNil(bucket),
-		Key:    pointerOrNil(key),
+		Bucket: pointerOrNil(obj.Bucket),
+		Key:    pointerOrNil(obj.Key),
 	})
 	if err != nil {
 		return nil, nil, err
@@ -45,8 +50,7 @@ func (c *Client) GetObject(ctx context.Context, bucket string, key string) (io.R
 }
 
 type PutObjectInput struct {
-	Bucket        string
-	Key           string
+	Object        *Object
 	Body          io.Reader
 	ContentLength int64
 	ContentType   string
@@ -54,8 +58,8 @@ type PutObjectInput struct {
 
 func (c *Client) PutObject(ctx context.Context, input PutObjectInput) error {
 	_, err := c.client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:        pointerOrNil(input.Bucket),
-		Key:           pointerOrNil(input.Key),
+		Bucket:        pointerOrNil(input.Object.Bucket),
+		Key:           pointerOrNil(input.Object.Key),
 		Body:          input.Body,
 		ContentLength: pointerOrNil(input.ContentLength),
 		ContentType:   pointerOrNil(input.ContentType),
@@ -63,10 +67,10 @@ func (c *Client) PutObject(ctx context.Context, input PutObjectInput) error {
 	return err
 }
 
-func (c *Client) PresignGetObject(ctx context.Context, bucket string, key string) (*signer.PresignedHTTPRequest, error) {
+func (c *Client) PresignGetObject(ctx context.Context, obj *Object) (*signer.PresignedHTTPRequest, error) {
 	return s3.NewPresignClient(c.client).PresignGetObject(ctx, &s3.GetObjectInput{
-		Bucket: pointerOrNil(bucket),
-		Key:    pointerOrNil(key),
+		Bucket: pointerOrNil(obj.Bucket),
+		Key:    pointerOrNil(obj.Key),
 	})
 }
 
