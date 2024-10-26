@@ -35,6 +35,8 @@ Command:
 
   put         [--content-type TYPE] localFile bucket/key
 
+  delete      bucket/key bucket/key bucket/key ...
+
   private-url bucket/key
   public-url  bucket/key
 `
@@ -213,6 +215,22 @@ func run(ctx context.Context, cmd string, args ...string) error {
 			ContentLength: info.Size(),
 			ContentType:   contentType,
 		})
+	case "delete":
+		var objs []*Object
+		for _, arg := range args {
+			bucket, key, err := parseAsObject(arg, true)
+			if err != nil {
+				return err
+			}
+			objs = append(objs, &Object{
+				Bucket: bucket,
+				Key:    key,
+			})
+		}
+		if len(objs) == 0 {
+			return errors.New("need bucket/key arguments")
+		}
+		return NewClient(cfg).DeleteObjects(ctx, objs)
 	case "public-url":
 		if err := needArgs(args, 1); err != nil {
 			return err

@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"errors"
 	"io"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	signer "github.com/aws/aws-sdk-go-v2/aws/signer/v4"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
 type Client struct {
@@ -63,6 +65,26 @@ func (c *Client) PutObject(ctx context.Context, input PutObjectInput) error {
 		Body:          input.Body,
 		ContentLength: pointerOrNil(input.ContentLength),
 		ContentType:   pointerOrNil(input.ContentType),
+	})
+	return err
+}
+
+func (c *Client) DeleteObjects(ctx context.Context, objs []*Object) error {
+	var deleteObjects []types.ObjectIdentifier
+	bucket := objs[0].Bucket
+	for _, obj := range objs {
+		if obj.Bucket != bucket {
+			return errors.New("cannot delete multiple bucket objects at once")
+		}
+		deleteObjects = append(deleteObjects, types.ObjectIdentifier{
+			Key: aws.String(obj.Key),
+		})
+	}
+	_, err := c.client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+		Bucket: aws.String(bucket),
+		Delete: &types.Delete{
+			Objects: deleteObjects,
+		},
 	})
 	return err
 }
