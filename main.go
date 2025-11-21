@@ -136,8 +136,10 @@ func run(ctx context.Context, cmd string, args ...string) error {
 		if err != nil {
 			return err
 		}
-		defer f.Close()
-		defer os.Remove(localFile + "_tmp")
+		defer func() {
+			_ = f.Close()
+			_ = os.Remove(localFile + "_tmp")
+		}()
 		reader, closes, err := NewClient(cfg).GetObject(ctx, &Object{
 			Bucket: bucket,
 			Key:    key,
@@ -149,8 +151,13 @@ func run(ctx context.Context, cmd string, args ...string) error {
 		if _, err := io.Copy(f, reader); err != nil {
 			return err
 		}
-		f.Close()
-		return os.Rename(localFile+"_tmp", localFile)
+		if err := f.Close(); err != nil {
+			return err
+		}
+		if err := os.Rename(localFile+"_tmp", localFile); err != nil {
+			return err
+		}
+		return nil
 	case "ls":
 		if err := needArgs(args, 0, 1); err != nil {
 			return err
@@ -196,7 +203,7 @@ func run(ctx context.Context, cmd string, args ...string) error {
 		if err != nil {
 			return err
 		}
-		defer f.Close()
+		defer func() { _ = f.Close() }()
 		info, err := f.Stat()
 		if err != nil {
 			return err
